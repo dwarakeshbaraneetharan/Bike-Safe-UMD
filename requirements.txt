@@ -1,0 +1,7 @@
+Flask==2.2.2
+Werkzeug==2.2.2
+geopandas
+networkx
+shapely
+gunicorn
+geopy

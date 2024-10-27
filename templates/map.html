@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bike Route Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Proxima+Nova:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Proxima Nova', sans-serif;
+            background-color: #f4f4f4; /* Light gray background */
+        }
+        #map {
+            height: calc(100vh - 50px);
+            width: 100%;
+        }
+        #back-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #CF102D; /* UMD Red */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s;
+        }
+        #back-button:hover {
+            background-color: #A81024; /* Darker red on hover */
+        }
+        #calculating-banner {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #CF102D; /* UMD Red */
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        #info-bar {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #CF102D; /* UMD Red */
+            padding: 15px;
+            border: 1px solid #ccc;
+            width: calc(100% - 20px); /* Adjust width for padding */
+            text-align: center;
+            z-index: 1000;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        #center-button {
+            position: absolute;
+            bottom: 70px; /* Adjusted for padding from info bar */
+            right: 10px;
+            background-color: #CF102D; /* UMD Red */
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1000;
+            border: none;
+        }
+        #center-button img {
+            width: 60%;
+            height: 60%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="back-button" onclick="window.location.href='/'">Back</div>
+    <div id="calculating-banner">Calculating...</div>
+    <div id="info-bar">
+        Destination: <span id="destination-name"></span> | ETA: <span id="eta"></span>
+    </div>
+    <div id="center-button" onclick="centerOnUser()">
+        <img src="/static/turtle-icon.png" alt="Center on User" />
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([38.991785, -76.942599], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // User icon
+        var userIcon = L.icon({
+            iconUrl: '/static/turtle-icon.png',
+            iconSize: [30, 30],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        });
+
+        // Destination icon
+        var destIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: red; border-radius: 50%; width: 20px; height: 20px;"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        // Initialize user marker and variables
+        var userMarker;
+        var userPosition;
+        var routeLine;
+        var destinationMarker;
+
+        function trackUser() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(function(position) {
+                    var userLat = position.coords.latitude;
+                    var userLng = position.coords.longitude;
+                    userPosition = [userLat, userLng];
+
+                    // Update user marker
+                    if (!userMarker) {
+                        userMarker = L.marker(userPosition, { icon: userIcon }).addTo(map);
+                    } else {
+                        userMarker.setLatLng(userPosition);
+                    }
+
+                    var destination = "{{ destination }}"; // Pass the selected destination from Flask
+                    if (destination) {
+                        // Show calculating banner
+                        document.getElementById('calculating-banner').style.display = 'block';
+
+                        fetch('/get_route', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                user_location: [userLng, userLat], // Ensure the order is correct: [lng, lat]
+                                destination_name: destination
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Hide calculating banner
+                            document.getElementById('calculating-banner').style.display = 'none';
+
+                            // Remove previous route line
+                            if (routeLine) {
+                                map.removeLayer(routeLine);
+                            }
+
+                            // Add the route line
+                            routeLine = L.polyline(data.route, { color: 'blue', weight: 5 }).addTo(map);
+
+                            // Calculate distance (in meters)
+                            var totalDistance = 0;
+                            for (var i = 0; i < data.route.length - 1; i++) {
+                                totalDistance += map.distance(data.route[i], data.route[i + 1]);
+                            }
+
+                            // Update destination name and ETA
+                            document.getElementById('destination-name').innerText = destination;
+
+                            // Average biking speed in m/s
+                            var averageSpeed = 5;
+                            var etaInSeconds = totalDistance / averageSpeed;
+                            var etaMinutes = Math.ceil(etaInSeconds / 60);
+                            document.getElementById('eta').innerText = etaMinutes + ' min';
+
+                            // Add the destination marker (small red marker)
+                            var destinationCoords = data.route[data.route.length - 1];
+                            if (!destinationMarker) {
+                                destinationMarker = L.marker(destinationCoords, { icon: destIcon }).addTo(map);
+                            } else {
+                                destinationMarker.setLatLng(destinationCoords);
+                            }
+                        });
+                    }
+                }, function() {
+                    alert("Unable to retrieve your location.");
+                }, {
+                    enableHighAccuracy: true
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function centerOnUser() {
+            if (userPosition) {
+                map.setView(userPosition, 18);
+            } else {
+                alert("User location not available.");
+            }
+        }
+
+        // Start tracking user location
+        trackUser();
+    </script>
+</body>
+</html>

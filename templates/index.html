@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bike Route Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Proxima+Nova:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Proxima Nova', sans-serif;
+            background-color: #e41736; /* red background */
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        #form {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        img {
+            width: 100%; /* Make the image take the full width */
+            max-width: 600px; /* Limit the width on larger screens */
+            height: auto; /* Maintain aspect ratio */
+            margin: 20px 0; /* Adds space around the image */
+        }
+        h1 {
+            color: #CF102D; /* UMD Red */
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #FFCD23; /* UMD Gold */
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #CF102D; /* UMD Red */
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #A81024; /* Darker red on hover */
+        }
+    </style>
+</head>
+<body>
+    <img src="/static/home-logo.png" alt="UMD Logo">
+
+    <div id="form">
+        <h1>Enter Destination</h1>
+        <form action="/submit_destination" method="POST">
+            <input type="text" name="destination" placeholder="Enter destination" required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</body>
+</html>

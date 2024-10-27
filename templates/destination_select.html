@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Destination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Proxima+Nova:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Proxima Nova', sans-serif;
+            background-color: #f4f4f4; /* Light gray background */
+            margin: 0;
+            padding: 0;
+        }
+        #matches {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            background-color: #CF102D; /* UMD Red */
+            color: white; /* White text */
+            text-align: center;
+            padding: 10px 0; /* Vertical padding for the heading */
+            border-radius: 8px; /* Rounded corners for the heading */
+        }
+        ul {
+            list-style-type: none; /* Remove default bullet points */
+            padding: 0;
+        }
+        li {
+            cursor: pointer;
+            margin: 10px 0;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            color: #CF102D; /* UMD Red */
+            text-decoration: underline; /* Underline to indicate links */
+            transition: color 0.3s;
+        }
+        li:hover {
+            color: #A81024; /* Darker red on hover */
+        }
+    </style>
+</head>
+<body>
+    <div id="matches">
+        <h1>Select Destination</h1>
+        <ul>
+            {% for match in matches %}
+                <li onclick="selectDestination('{{ match }}')">{{ match }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        function selectDestination(destination) {
+            window.location.href = `/map?destination=${encodeURIComponent(destination)}`;
+        }
+    </script>
+</body>
+</html>
